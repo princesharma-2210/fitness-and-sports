@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awesome Smart Alarm</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+            transition: background 0.5s ease;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        input, button {
+            margin: 10px 0;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 25px;
+            border: none;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input {
+            width: calc(100% - 24px);
+            background-color: #f0f0f0;
+        }
+
+        input:focus {
+            box-shadow: 0 0 0 2px #ff9a9e;
+        }
+
+        button {
+            background-color: #ff9a9e;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background-color: #ff8b8b;
+            transform: scale(1.05);
+        }
+
+        #mathProblem {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 15px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #problem {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .alarm-ringing {
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .runner {
+            position: absolute;
+            bottom: 10px;
+            left: -50px;
+            width: 50px;
+            height: 50px;
+            background-color: #333;
+            border-radius: 50%;
+            animation: run 4s linear infinite;
+            display: none;
+        }
+
+        .runner::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 15px;
+            width: 20px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 50%;
+        }
+
+        .runner::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 5px;
+            width: 40px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            animation: legs 0.2s linear infinite alternate;
+        }
+
+        @keyframes run {
+            0% { left: -50px; }
+            100% { left: calc(100% + 50px); }
+        }
+
+        @keyframes legs {
+            0% { transform: scaleX(0.8); }
+            100% { transform: scaleX(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="alarmContainer">
+        <h1>Smart Alarm</h1>
+        <input type="date" id="alarmDate" placeholder="Set Date">
+        <input type="time" id="alarmTime" placeholder="Set Time">
+        <button id="setAlarmBtn">Set Alarm</button>
+        <div id="mathProblem">
+            <p id="problem"></p>
+            <input type="number" id="answer" placeholder="Your answer">
+            <button id="submitAnswerBtn">Submit</button>
+        </div>
+        <audio id="alarmSound" src="https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3" loop></audio>
+        <div class="runner"></div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            let alarmTimeout;
+
+            document.getElementById('setAlarmBtn').addEventListener('click', setAlarm);
+            document.getElementById('submitAnswerBtn').addEventListener('click', checkAnswer);
+
+            function setAlarm() {
+                const alarmDate = document.getElementById('alarmDate').value;
+                const alarmTime = document.getElementById('alarmTime').value;
+                
+                if (alarmDate && alarmTime) {
+                    const now = new Date();
+                    const alarm = new Date(alarmDate + ' ' + alarmTime);
+
+                    if (alarm > now) {
+                        const timeToAlarm = alarm - now;
+                        alarmTimeout = setTimeout(ringAlarm, timeToAlarm);
+                        alert(`Alarm set for ${alarmDate} at ${alarmTime}`);
+                    } else {
+                        alert('Please set a future date and time for the alarm.');
+                    }
+                } else {
+                    alert('Please set a valid date and time.');
+                }
+            }
+
+            function ringAlarm() {
+                document.getElementById('alarmSound').play();
+                document.getElementById('alarmContainer').classList.add('alarm-ringing');
+                document.body.style.background = 'linear-gradient(45deg, #ff6b6b 0%, #feca57 100%)';
+                generateMathProblem();
+                document.querySelector('.runner').style.display = 'block';
+            }
+
+            function generateMathProblem() {
+                const num1 = Math.floor(Math.random() * 10) + 1;
+                const num2 = Math.floor(Math.random() * 10) + 1;
+                const operators = ['+', '-', '*'];
+                const operator = operators[Math.floor(Math.random() * operators.length)];
+
+                let problem, answer;
+                switch(operator) {
+                    case '+':
+                        problem = `${num1} + ${num2}`;
+                        answer = num1 + num2;
+                        break;
+                    case '-':
+                        problem = `${num1} - ${num2}`;
+                        answer = num1 - num2;
+                        break;
+                    case '*':
+                        problem = `${num1} × ${num2}`;
+                        answer = num1 * num2;
+                        break;
+                }
+
+                document.getElementById('problem').textContent = `Solve: ${problem}`;
+                document.getElementById('mathProblem').style.display = 'block';
+                document.getElementById('answer').value = '';
+                document.getElementById('answer').focus();
+
+                window.correctAnswer = answer;
+            }
+
+            function checkAnswer() {
+                const userAnswer = parseInt(document.getElementById('answer').value);
+                if (userAnswer === window.correctAnswer) {
+                    document.getElementById('alarmSound').pause();
+                    document.getElementById('alarmContainer').classList.remove('alarm-ringing');
+                    document.getElementById('mathProblem').style.display = 'none';
+                    document.body.style.background = 'linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%)';
+                    document.querySelector('.runner').style.display = 'none';
+                    alert('Great job! You\'ve successfully woken up.');
+                } else {
+                    alert('Incorrect. Try again!');
+                    document.getElementById('answer').value = '';
+                    document.getElementById('answer').focus();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
